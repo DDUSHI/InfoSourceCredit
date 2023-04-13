@@ -23,19 +23,20 @@ def classify_site(site_name, evaluation_criteria):
 
 db = mysql.connector.connect(
     host="localhost",
-    user="username",
-    password="password",
-    database="database_name"
+    user="root",
+    password="mariadbPW",
+    database="InfoSourceCredit",
+    port=3306,
+    client_flags=[mysql.connector.ClientFlag.INTERACTIVE]
 )
 
 cursor = db.cursor()
-cursor.execute("SELECT id, site_name, evaluation_criteria FROM site_table")
+cursor.execute("SELECT site_name, evaluation_criteria FROM site_table")
 site_data = cursor.fetchall()
 
 for site in site_data:
-    site_id = site[0]
-    site_name = site[1]
-    evaluation_criteria = site[2]
+    site_name = site[0]
+    evaluation_criteria = site[1]
     classification = classify_site(site_name, evaluation_criteria)
-    cursor.execute("UPDATE site_table SET classification=%s WHERE id=%s", (classification, site_id))
+    cursor.execute("UPDATE site_table SET classification=%s WHERE site_name=%s", (classification, site_name))
     db.commit()
