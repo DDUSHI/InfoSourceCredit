@@ -35,18 +35,33 @@ for website in websites:
     current_scores = list(website[1:])
     
     # Escape special characters in the website address
+    
     try:
-        response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=f"Assess the reliability of {address} based on the following criteria: authority, accuracy, objectivity, currency, coverage, consistency. Score each criterion from 1 (lowest) to 5 (highest). Your Answering format should be 'score of authority,score of accuracy,score of objectivity,score of currency,score of coverage,score of consistency'",
-        max_tokens=64,  # Use a smaller max_tokens value to simplify the response
-        n=1,
-        stop=None,
-        temperature=0.5
-    )
+        scores_sum = [0,0,0,0,0,0]
+        for i in range(1, 11):
+            response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=f"Assess the reliability of {address} based on the following criteria: authority, accuracy, objectivity, currency, coverage, consistency. Score each criterion from 1.0 (lowest) to 5.0 (highest). Your Answering format should be 'score of authority,score of accuracy,score of objectivity,score of currency,score of coverage,score of consistency'",
+            max_tokens=64,  # Use a smaller max_tokens value to simplify the response
+            n=1,
+            stop=None,
+            temperature=0.1
+            )
+            updated_scores = response.choices[0].text.split(',')
+            updated_scores[0] = updated_scores[0].replace("\n\n", "")
+            scores_sum[0] += float(updated_scores[0]);
+            scores_sum[1] += float(updated_scores[1]);
+            scores_sum[2] += float(updated_scores[2]);
+            scores_sum[3] += float(updated_scores[3]);
+            scores_sum[4] += float(updated_scores[4]);
+            scores_sum[5] += float(updated_scores[5]);
 
-        updated_scores = response.choices[0].text.split(',')
-        updated_scores[0] = updated_scores[0].replace("\n\n", "")
+        updated_scores[0] = scores_sum[0] / 10
+        updated_scores[1] = scores_sum[1] / 10
+        updated_scores[2] = scores_sum[2] / 10
+        updated_scores[3] = scores_sum[3] / 10
+        updated_scores[4] = scores_sum[4] / 10
+        updated_scores[5] = scores_sum[5] / 10
         # Update the corresponding reliability criteria in the site_table table
         if len(updated_scores) >= 6:
             sql = "UPDATE site_table SET authority=%s, accuracy=%s, objectivity=%s, currency=%s, coverage=%s, consistency=%s, score_change_date=%s WHERE site_address = %s"
@@ -59,7 +74,7 @@ for website in websites:
                 if current_scores[i] != updated_scores[i]:
                     issue_item = ["authority", "accuracy", "objectivity", "currency", "coverage", "consistency"][i]
                     old_score = current_scores[i]
-                    new_score = updated_scores[i].strip()
+                    new_score = updated_scores[i]
                     reason = "Credit score change"
                     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     sql = "INSERT INTO site_issues (site_address, issue_item, old_score, new_score, reason, date) VALUES (%s, %s, %s, %s, %s, %s)"
