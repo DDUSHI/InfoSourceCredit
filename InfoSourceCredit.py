@@ -3,6 +3,19 @@ import openai
 import asyncio
 from datetime import datetime
 import aiohttp
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+db_config = {
+    'host': config.get('DATABASE', 'host'),
+    'user': config.get('DATABASE', 'user'),
+    'password': config.get('DATABASE', 'password'),
+    'database': config.get('DATABASE', 'database'),
+    'port': config.getint('DATABASE', 'port'),
+    'client_flags': [mysql.connector.ClientFlag.INTERACTIVE],
+}
 
 
 def update_site_table(address, updated_scores):
@@ -78,14 +91,7 @@ async def main():
         else:
             print(f"Error: {address} - updated_scores list length is less than 6")
 
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="mariadbPW",
-    database="infosourcecredit",
-    port=3306,
-    client_flags=[mysql.connector.ClientFlag.INTERACTIVE]
-)
+db = mysql.connector.connect(**db_config)
 
 cursor = db.cursor()
 
