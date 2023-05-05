@@ -6,7 +6,7 @@ import aiohttp
 import configparser
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read('config.ini', encoding='utf-8')
 
 db_config = {
     'host': config.get('DATABASE', 'host'),
